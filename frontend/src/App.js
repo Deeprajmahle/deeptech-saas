@@ -1,28 +1,19 @@
-// src/App.js
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Login from './components/auth/Login';
 import Register from './components/auth/Register';
-import DashboardLayout from './components/dashboard/DashboardLayout';
 import Dashboard from './components/dashboard/Dashboard';
 import Analytics from './components/dashboard/Analytics';
 import Settings from './components/dashboard/Settings';
-import Home from './components/Home';
 import Courses from './components/courses/Courses';
 import CourseDetail from './components/courses/CourseDetail';
-import Profile from './components/profile/Profile';
 
-// Protected Route Component
 const ProtectedRoute = ({ children }) => {
     const { user, loading } = useAuth();
     
     if (loading) {
-        return (
-            <div className="flex items-center justify-center h-screen">
-                <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-indigo-500"></div>
-            </div>
-        );
+        return <div>Loading...</div>;
     }
     
     if (!user) {
@@ -32,10 +23,12 @@ const ProtectedRoute = ({ children }) => {
     return children;
 };
 
-// Auth aware route component
-const AuthAwareRoute = ({ children }) => {
+const AuthRoute = ({ children }) => {
     const { user } = useAuth();
-    return user ? <Navigate to="/dashboard" /> : children;
+    if (user) {
+        return <Navigate to="/dashboard" />;
+    }
+    return children;
 };
 
 function App() {
@@ -43,62 +36,50 @@ function App() {
         <AuthProvider>
             <Router>
                 <Routes>
-                    {/* Public Routes */}
-                    <Route path="/" element={<Home />} />
+                    {/* Auth Routes */}
                     <Route path="/login" element={
-                        <AuthAwareRoute>
+                        <AuthRoute>
                             <Login />
-                        </AuthAwareRoute>
+                        </AuthRoute>
                     } />
                     <Route path="/register" element={
-                        <AuthAwareRoute>
+                        <AuthRoute>
                             <Register />
-                        </AuthAwareRoute>
+                        </AuthRoute>
                     } />
 
                     {/* Protected Routes */}
                     <Route path="/dashboard" element={
                         <ProtectedRoute>
-                            <DashboardLayout>
-                                <Dashboard />
-                            </DashboardLayout>
+                            <Dashboard />
                         </ProtectedRoute>
                     } />
                     <Route path="/analytics" element={
                         <ProtectedRoute>
-                            <DashboardLayout>
-                                <Analytics />
-                            </DashboardLayout>
+                            <Analytics />
                         </ProtectedRoute>
                     } />
                     <Route path="/settings" element={
                         <ProtectedRoute>
-                            <DashboardLayout>
-                                <Settings />
-                            </DashboardLayout>
-                        </ProtectedRoute>
-                    } />
-                    <Route path="/profile" element={
-                        <ProtectedRoute>
-                            <DashboardLayout>
-                                <Profile />
-                            </DashboardLayout>
+                            <Settings />
                         </ProtectedRoute>
                     } />
                     <Route path="/courses" element={
                         <ProtectedRoute>
-                            <DashboardLayout>
-                                <Courses />
-                            </DashboardLayout>
+                            <Courses />
                         </ProtectedRoute>
                     } />
                     <Route path="/courses/:id" element={
                         <ProtectedRoute>
-                            <DashboardLayout>
-                                <CourseDetail />
-                            </DashboardLayout>
+                            <CourseDetail />
                         </ProtectedRoute>
                     } />
+
+                    {/* Redirect root to dashboard or login */}
+                    <Route path="/" element={<Navigate to="/dashboard" />} />
+                    
+                    {/* Catch all route */}
+                    <Route path="*" element={<Navigate to="/dashboard" />} />
                 </Routes>
             </Router>
         </AuthProvider>

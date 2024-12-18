@@ -1,204 +1,223 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import api from '../../config/api';
-import Calendar from 'react-calendar';
-import 'react-calendar/dist/Calendar.css';
-import { Line } from 'react-chartjs-2';
-import {
-    Chart as ChartJS,
-    CategoryScale,
-    LinearScale,
-    PointElement,
-    LineElement,
-    Title,
-    Tooltip,
-    Legend,
-} from 'chart.js';
+import DashboardLayout from './DashboardLayout';
 
-ChartJS.register(
-    CategoryScale,
-    LinearScale,
-    PointElement,
-    LineElement,
-    Title,
-    Tooltip,
-    Legend
-);
+// Sample course images - Replace these with your actual course images
+const COURSE_IMAGES = {
+    python: 'https://images.unsplash.com/photo-1526379095098-d400fd0bf935?auto=format&fit=crop&q=80&w=500',
+    web: 'https://images.unsplash.com/photo-1547658719-da2b51169166?auto=format&fit=crop&q=80&w=500',
+    data: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&q=80&w=500'
+};
 
 const Dashboard = () => {
     const { user } = useAuth();
-    const [courses, setCourses] = useState([]);
-    const [activities, setActivities] = useState([]);
-    const [selectedDate, setSelectedDate] = useState(new Date());
-    const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        const fetchDashboardData = async () => {
-            try {
-                const [coursesRes] = await Promise.all([
-                    api.get('/api/courses'),
-                ]);
-                setCourses(coursesRes.data.data);
-            } catch (error) {
-                console.error('Error fetching dashboard data:', error);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchDashboardData();
-    }, []);
-
-    const progressData = {
-        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-        datasets: [
-            {
-                label: 'Course Progress',
-                data: [30, 45, 60, 70, 85, 100],
-                fill: false,
-                borderColor: 'rgb(75, 192, 192)',
-                tension: 0.1,
-            },
-        ],
-    };
-
-    if (loading) {
-        return (
-            <div className="flex items-center justify-center h-screen">
-                <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-indigo-500"></div>
-            </div>
-        );
-    }
+    // Sample featured courses - Replace with actual data from your API
+    const featuredCourses = [
+        {
+            id: 1,
+            title: 'Python Programming',
+            instructor: 'John Doe',
+            image: COURSE_IMAGES.python,
+            progress: 75,
+            category: 'Programming'
+        },
+        {
+            id: 2,
+            title: 'Web Development',
+            instructor: 'Jane Smith',
+            image: COURSE_IMAGES.web,
+            progress: 45,
+            category: 'Development'
+        },
+        {
+            id: 3,
+            title: 'Data Science',
+            instructor: 'Mike Johnson',
+            image: COURSE_IMAGES.data,
+            progress: 30,
+            category: 'Data Science'
+        }
+    ];
 
     return (
-        <div className="container mx-auto px-4 py-8">
-            {/* Header Section */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 space-y-4 sm:space-y-0">
-                <div>
-                    <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">My Dashboard</h1>
-                    <p className="text-sm sm:text-base text-gray-600">{user.title || 'IT Specialist'}</p>
-                </div>
-                <div className="flex items-center space-x-4 w-full sm:w-auto">
-                    <div className="text-left sm:text-right flex-grow sm:flex-grow-0">
-                        <p className="text-lg sm:text-xl font-semibold truncate">{user.name}</p>
-                        <p className="text-sm text-gray-600 truncate">{user.email}</p>
-                    </div>
-                    <img
-                        src={user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=random`}
-                        alt="Profile"
-                        className="w-12 h-12 sm:w-16 sm:h-16 rounded-full flex-shrink-0"
-                    />
-                </div>
-            </div>
-
-            {/* Stats Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
-                <div className="bg-white rounded-lg shadow p-4 sm:p-6">
-                    <h3 className="text-gray-500 text-sm font-medium">Overall Rating</h3>
-                    <p className="text-2xl sm:text-3xl font-bold">{user.statistics?.averageRating || '8.2'}</p>
-                </div>
-                <div className="bg-white rounded-lg shadow p-4 sm:p-6">
-                    <h3 className="text-gray-500 text-sm font-medium">Completed Projects</h3>
-                    <p className="text-2xl sm:text-3xl font-bold">{user.statistics?.completedProjects || '12'}</p>
-                </div>
-                <div className="bg-white rounded-lg shadow p-4 sm:p-6">
-                    <h3 className="text-gray-500 text-sm font-medium">Active Courses</h3>
-                    <p className="text-2xl sm:text-3xl font-bold">{courses.length}</p>
-                </div>
-                <div className="bg-white rounded-lg shadow p-4 sm:p-6">
-                    <h3 className="text-gray-500 text-sm font-medium">Hours Spent</h3>
-                    <p className="text-2xl sm:text-3xl font-bold">{user.statistics?.hoursSpent || '156'}</p>
-                </div>
-            </div>
-
-            {/* Main Content Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Progress Chart */}
-                <div className="lg:col-span-2 bg-white rounded-lg shadow p-4 sm:p-6">
-                    <h2 className="text-lg sm:text-xl font-semibold mb-4">Learning Progress</h2>
-                    <div className="h-64 sm:h-80">
-                        <Line 
-                            data={progressData}
-                            options={{
-                                responsive: true,
-                                maintainAspectRatio: false,
-                                scales: {
-                                    y: {
-                                        beginAtZero: true,
-                                        max: 100,
-                                    },
-                                },
-                            }}
+        <DashboardLayout>
+            <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8">
+                {/* User Welcome Section with Avatar */}
+                <div className="bg-white shadow rounded-lg p-4 sm:p-5 md:p-6 mb-6">
+                    <div className="flex items-center">
+                        <img
+                            src={user?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'User')}&background=random`}
+                            alt="Profile"
+                            className="h-16 w-16 sm:h-20 sm:w-20 rounded-full object-cover border-4 border-gray-100"
                         />
+                        <div className="ml-4 sm:ml-6">
+                            <h1 className="text-xl sm:text-2xl md:text-3xl font-semibold text-gray-900">
+                                Welcome back, {user?.name}!
+                            </h1>
+                            <p className="mt-1 text-sm sm:text-base text-gray-500">
+                                Continue your learning journey
+                            </p>
+                        </div>
                     </div>
                 </div>
 
-                {/* Calendar */}
-                <div className="bg-white rounded-lg shadow p-4 sm:p-6">
-                    <h2 className="text-lg sm:text-xl font-semibold mb-4">Schedule</h2>
-                    <Calendar
-                        onChange={setSelectedDate}
-                        value={selectedDate}
-                        className="w-full border-0 shadow-none"
-                    />
+                {/* Stats Grid */}
+                <div className="grid grid-cols-1 gap-4 sm:gap-5 sm:grid-cols-2 lg:grid-cols-3 mb-6">
+                    {/* Course Progress */}
+                    <div className="bg-white overflow-hidden shadow rounded-lg">
+                        <div className="p-4 sm:p-5">
+                            <div className="flex items-center">
+                                <div className="flex-shrink-0">
+                                    <svg className="h-5 w-5 sm:h-6 sm:w-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                                    </svg>
+                                </div>
+                                <div className="ml-4 sm:ml-5 w-0 flex-1">
+                                    <dl>
+                                        <dt className="text-sm sm:text-base font-medium text-gray-500 truncate">Course Progress</dt>
+                                        <dd className="flex items-baseline">
+                                            <div className="text-xl sm:text-2xl font-semibold text-gray-900">75%</div>
+                                            <div className="ml-2 flex items-baseline text-xs sm:text-sm font-semibold text-green-600">
+                                                <svg className="self-center flex-shrink-0 h-4 w-4 sm:h-5 sm:w-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path fillRule="evenodd" d="M5.293 9.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 7.414V15a1 1 0 11-2 0V7.414L6.707 9.707a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                                                </svg>
+                                                <span className="sr-only">Increased by</span>
+                                                25%
+                                            </div>
+                                        </dd>
+                                    </dl>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Active Courses */}
+                    <div className="bg-white overflow-hidden shadow rounded-lg">
+                        <div className="p-4 sm:p-5">
+                            <div className="flex items-center">
+                                <div className="flex-shrink-0">
+                                    <svg className="h-5 w-5 sm:h-6 sm:w-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                                    </svg>
+                                </div>
+                                <div className="ml-4 sm:ml-5 w-0 flex-1">
+                                    <dl>
+                                        <dt className="text-sm sm:text-base font-medium text-gray-500 truncate">Active Courses</dt>
+                                        <dd className="flex items-baseline">
+                                            <div className="text-xl sm:text-2xl font-semibold text-gray-900">3</div>
+                                        </dd>
+                                    </dl>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Completed Courses */}
+                    <div className="bg-white overflow-hidden shadow rounded-lg">
+                        <div className="p-4 sm:p-5">
+                            <div className="flex items-center">
+                                <div className="flex-shrink-0">
+                                    <svg className="h-5 w-5 sm:h-6 sm:w-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                </div>
+                                <div className="ml-4 sm:ml-5 w-0 flex-1">
+                                    <dl>
+                                        <dt className="text-sm sm:text-base font-medium text-gray-500 truncate">Completed Courses</dt>
+                                        <dd className="flex items-baseline">
+                                            <div className="text-xl sm:text-2xl font-semibold text-gray-900">5</div>
+                                        </dd>
+                                    </dl>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
-                {/* Recent Courses */}
-                <div className="lg:col-span-2 bg-white rounded-lg shadow p-4 sm:p-6">
-                    <h2 className="text-lg sm:text-xl font-semibold mb-4">Recent Courses</h2>
-                    <div className="space-y-4">
-                        {courses.slice(0, 3).map((course, index) => (
-                            <div key={index} className="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg">
-                                <div className="flex-shrink-0">
+                {/* Featured Courses */}
+                <div className="bg-white shadow rounded-lg p-4 sm:p-5 md:p-6">
+                    <h2 className="text-lg sm:text-xl md:text-2xl font-medium text-gray-900 mb-4">Featured Courses</h2>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                        {featuredCourses.map(course => (
+                            <div key={course.id} className="group relative">
+                                <div className="relative w-full h-48 rounded-lg overflow-hidden group-hover:opacity-75 transition-opacity">
                                     <img
-                                        src={course.thumbnail || 'https://via.placeholder.com/150'}
+                                        src={course.image}
                                         alt={course.title}
-                                        className="w-16 h-16 rounded-lg object-cover"
+                                        className="w-full h-full object-cover"
                                     />
                                 </div>
-                                <div className="flex-grow min-w-0">
-                                    <h3 className="text-sm sm:text-base font-medium text-gray-900 truncate">{course.title}</h3>
-                                    <p className="text-sm text-gray-500 truncate">{course.instructor}</p>
-                                    <div className="mt-1 relative pt-1">
-                                        <div className="overflow-hidden h-2 text-xs flex rounded bg-gray-200">
-                                            <div
-                                                style={{ width: `${course.progress || 0}%` }}
-                                                className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-indigo-500"
-                                            ></div>
+                                <div className="mt-4">
+                                    <h3 className="text-sm sm:text-base font-medium text-gray-900">
+                                        {course.title}
+                                    </h3>
+                                    <p className="text-xs sm:text-sm text-gray-500">
+                                        {course.instructor}
+                                    </p>
+                                    <div className="mt-2">
+                                        <div className="relative pt-1">
+                                            <div className="overflow-hidden h-2 text-xs flex rounded bg-gray-200">
+                                                <div
+                                                    style={{ width: `${course.progress}%` }}
+                                                    className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-blue-500"
+                                                />
+                                            </div>
+                                            <p className="mt-1 text-xs text-gray-500">{course.progress}% Complete</p>
                                         </div>
                                     </div>
                                 </div>
-                                <div className="flex-shrink-0 text-sm text-gray-500">
-                                    {course.progress || 0}%
-                                </div>
+                                <Link
+                                    to={`/courses/${course.id}`}
+                                    className="absolute inset-0"
+                                    aria-hidden="true"
+                                />
                             </div>
                         ))}
                     </div>
                 </div>
 
-                {/* Activity Feed */}
-                <div className="bg-white rounded-lg shadow p-4 sm:p-6">
-                    <h2 className="text-lg sm:text-xl font-semibold mb-4">Recent Activity</h2>
-                    <div className="space-y-4">
-                        {activities.map((activity, index) => (
-                            <div key={index} className="flex items-start space-x-3">
+                {/* Quick Actions */}
+                <div className="mt-6">
+                    <h2 className="text-lg sm:text-xl md:text-2xl font-medium text-gray-900 mb-4">Quick Actions</h2>
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                        <Link
+                            to="/courses"
+                            className="relative block p-4 sm:p-5 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg hover:from-blue-600 hover:to-blue-700 transition-colors duration-200"
+                        >
+                            <div className="flex items-center">
                                 <div className="flex-shrink-0">
-                                    <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center">
-                                        <svg className="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                        </svg>
-                                    </div>
+                                    <svg className="h-5 w-5 sm:h-6 sm:w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                                    </svg>
                                 </div>
-                                <div className="min-w-0 flex-1">
-                                    <p className="text-sm text-gray-900">{activity.description}</p>
-                                    <p className="text-xs text-gray-500">{activity.time}</p>
+                                <div className="ml-4">
+                                    <h3 className="text-base sm:text-lg font-medium text-white">Browse Courses</h3>
+                                    <p className="mt-1 text-xs sm:text-sm text-blue-100">Explore our latest courses and start learning</p>
                                 </div>
                             </div>
-                        ))}
+                        </Link>
+                        <Link
+                            to="/analytics"
+                            className="relative block p-4 sm:p-5 bg-gradient-to-r from-purple-500 to-purple-600 rounded-lg hover:from-purple-600 hover:to-purple-700 transition-colors duration-200"
+                        >
+                            <div className="flex items-center">
+                                <div className="flex-shrink-0">
+                                    <svg className="h-5 w-5 sm:h-6 sm:w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                                    </svg>
+                                </div>
+                                <div className="ml-4">
+                                    <h3 className="text-base sm:text-lg font-medium text-white">View Analytics</h3>
+                                    <p className="mt-1 text-xs sm:text-sm text-purple-100">Track your progress and performance</p>
+                                </div>
+                            </div>
+                        </Link>
                     </div>
                 </div>
             </div>
-        </div>
+        </DashboardLayout>
     );
 };
 
