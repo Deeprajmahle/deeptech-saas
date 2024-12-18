@@ -56,7 +56,7 @@ function App() {
                         </AuthAwareRoute>
                     } />
 
-                    {/* Protected Dashboard Routes */}
+                    {/* Protected Routes */}
                     <Route path="/dashboard" element={
                         <ProtectedRoute>
                             <DashboardLayout>

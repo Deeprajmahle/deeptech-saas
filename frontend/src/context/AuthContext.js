@@ -20,17 +20,22 @@ export const AuthProvider = ({ children }) => {
 
     const checkAuthStatus = async () => {
         try {
+            console.log('Checking auth status...'); // Debug log
             const response = await api.get('/api/auth/me');
+            console.log('Auth status response:', response.data); // Debug log
+            
             if (response.data && response.data.user) {
                 setUser(response.data.user);
             } else {
+                console.log('No user data in response'); // Debug log
                 localStorage.removeItem('token');
                 setUser(null);
             }
         } catch (error) {
-            console.error('Auth check failed:', error);
+            console.error('Auth check failed:', error.response || error);
             localStorage.removeItem('token');
             setUser(null);
+            setError('Authentication failed');
         } finally {
             setLoading(false);
         }
@@ -39,7 +44,10 @@ export const AuthProvider = ({ children }) => {
     const login = async (email, password) => {
         try {
             setError(null);
+            console.log('Attempting login...'); // Debug log
+            
             const response = await api.post('/api/auth/login', { email, password });
+            console.log('Login response:', response.data); // Debug log
             
             if (response.data && response.data.token && response.data.user) {
                 localStorage.setItem('token', response.data.token);
@@ -48,17 +56,31 @@ export const AuthProvider = ({ children }) => {
             }
             throw new Error('Invalid response from server');
         } catch (error) {
-            console.error('Login failed:', error);
-            const message = error.response?.data?.message || 'Login failed';
-            setError(message);
-            throw new Error(message);
+            console.error('Login failed:', error.response || error);
+            setError(error.response?.data?.message || 'Login failed. Please check your credentials.');
+            return { success: false, error: error.response?.data?.message || 'Login failed' };
+        }
+    };
+
+    const logout = async () => {
+        try {
+            console.log('Logging out...'); // Debug log
+            await api.post('/api/auth/logout');
+        } catch (error) {
+            console.error('Logout error:', error);
+        } finally {
+            localStorage.removeItem('token');
+            setUser(null);
         }
     };
 
     const register = async (userData) => {
         try {
             setError(null);
+            console.log('Attempting registration...'); // Debug log
+            
             const response = await api.post('/api/auth/register', userData);
+            console.log('Registration response:', response.data); // Debug log
             
             if (response.data && response.data.token && response.data.user) {
                 localStorage.setItem('token', response.data.token);
@@ -67,16 +89,10 @@ export const AuthProvider = ({ children }) => {
             }
             throw new Error('Invalid response from server');
         } catch (error) {
-            console.error('Registration failed:', error);
-            const message = error.response?.data?.message || 'Registration failed';
-            setError(message);
-            throw new Error(message);
+            console.error('Registration failed:', error.response || error);
+            setError(error.response?.data?.message || 'Registration failed');
+            return { success: false, error: error.response?.data?.message || 'Registration failed' };
         }
-    };
-
-    const logout = () => {
-        localStorage.removeItem('token');
-        setUser(null);
     };
 
     const value = {
@@ -84,11 +100,16 @@ export const AuthProvider = ({ children }) => {
         loading,
         error,
         login,
+        logout,
         register,
-        logout
+        checkAuthStatus
     };
 
-    return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+    return (
+        <AuthContext.Provider value={value}>
+            {children}
+        </AuthContext.Provider>
+    );
 };
 
 export const useAuth = () => {
@@ -98,3 +119,5 @@ export const useAuth = () => {
     }
     return context;
 };
+
+export default AuthContext;
