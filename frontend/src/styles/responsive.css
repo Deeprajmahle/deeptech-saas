@@ -1,0 +1,147 @@
+/* Mobile Responsive Styles */
+
+/* General responsive styles */
+@media (max-width: 768px) {
+  .container {
+    padding: 1rem;
+  }
+
+  /* Typography */
+  h1 {
+    font-size: 1.75rem !important;
+  }
+  h2 {
+    font-size: 1.5rem !important;
+  }
+  h3 {
+    font-size: 1.25rem !important;
+  }
+
+  /* Form elements */
+  input, select, textarea {
+    font-size: 16px !important; /* Prevents zoom on iOS */
+  }
+
+  /* Buttons */
+  button {
+    padding: 0.5rem 1rem !important;
+    width: 100% !important;
+    margin: 0.5rem 0 !important;
+  }
+}
+
+/* Dashboard Layout */
+@media (max-width: 1024px) {
+  .dashboard-container {
+    grid-template-columns: 1fr !important;
+  }
+
+  .sidebar {
+    position: fixed !important;
+    left: -100% !important;
+    top: 0 !important;
+    bottom: 0 !important;
+    width: 250px !important;
+    z-index: 50 !important;
+    transition: left 0.3s ease-in-out !important;
+  }
+
+  .sidebar.open {
+    left: 0 !important;
+  }
+
+  .main-content {
+    margin-left: 0 !important;
+    width: 100% !important;
+  }
+
+  .mobile-menu-button {
+    display: block !important;
+  }
+
+  .header-content {
+    padding: 1rem !important;
+  }
+}
+
+/* Course Cards */
+@media (max-width: 768px) {
+  .course-grid {
+    grid-template-columns: 1fr !important;
+    gap: 1rem !important;
+  }
+
+  .course-card {
+    margin: 0.5rem 0 !important;
+  }
+}
+
+/* Analytics */
+@media (max-width: 768px) {
+  .analytics-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .chart-container {
+    overflow-x: auto !important;
+  }
+}
+
+/* Profile */
+@media (max-width: 768px) {
+  .profile-container {
+    padding: 1rem !important;
+  }
+
+  .profile-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* Auth Pages */
+@media (max-width: 768px) {
+  .auth-container {
+    padding: 1rem !important;
+    margin: 1rem !important;
+  }
+
+  .auth-form {
+    width: 100% !important;
+  }
+}
+
+/* Navigation */
+@media (max-width: 768px) {
+  .nav-links {
+    flex-direction: column !important;
+    padding: 1rem !important;
+  }
+
+  .nav-link {
+    padding: 0.5rem 0 !important;
+    width: 100% !important;
+    text-align: center !important;
+  }
+}
+
+/* Modals */
+@media (max-width: 768px) {
+  .modal-content {
+    width: 95% !important;
+    margin: 1rem !important;
+    padding: 1rem !important;
+  }
+}
+
+/* Tables */
+@media (max-width: 768px) {
+  table {
+    display: block !important;
+    overflow-x: auto !important;
+    white-space: nowrap !important;
+  }
+
+  td, th {
+    padding: 0.5rem !important;
+  }
+}
