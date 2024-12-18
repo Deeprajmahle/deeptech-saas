@@ -55,28 +55,50 @@ function App() {
                             <Register />
                         </AuthAwareRoute>
                     } />
-                    
-                    {/* Protected Routes */}
+
+                    {/* Protected Dashboard Routes */}
                     <Route path="/dashboard" element={
                         <ProtectedRoute>
-                            <DashboardLayout />
+                            <DashboardLayout>
+                                <Dashboard />
+                            </DashboardLayout>
                         </ProtectedRoute>
-                    }>
-                        <Route index element={<Dashboard />} />
-                        <Route path="analytics" element={<Analytics />} />
-                        <Route path="settings" element={<Settings />} />
-                        <Route path="profile" element={<Profile />} />
-                    </Route>
-
-                    {/* Course Routes */}
+                    } />
+                    <Route path="/analytics" element={
+                        <ProtectedRoute>
+                            <DashboardLayout>
+                                <Analytics />
+                            </DashboardLayout>
+                        </ProtectedRoute>
+                    } />
+                    <Route path="/settings" element={
+                        <ProtectedRoute>
+                            <DashboardLayout>
+                                <Settings />
+                            </DashboardLayout>
+                        </ProtectedRoute>
+                    } />
+                    <Route path="/profile" element={
+                        <ProtectedRoute>
+                            <DashboardLayout>
+                                <Profile />
+                            </DashboardLayout>
+                        </ProtectedRoute>
+                    } />
                     <Route path="/courses" element={
                         <ProtectedRoute>
-                            <DashboardLayout />
+                            <DashboardLayout>
+                                <Courses />
+                            </DashboardLayout>
                         </ProtectedRoute>
-                    }>
-                        <Route index element={<Courses />} />
-                        <Route path=":id" element={<CourseDetail />} />
-                    </Route>
+                    } />
+                    <Route path="/courses/:id" element={
+                        <ProtectedRoute>
+                            <DashboardLayout>
+                                <CourseDetail />
+                            </DashboardLayout>
+                        </ProtectedRoute>
+                    } />
                 </Routes>
             </Router>
         </AuthProvider>
