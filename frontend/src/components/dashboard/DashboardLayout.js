@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import '../../styles/responsive.css';
 
 const DashboardLayout = () => {
     const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -16,10 +15,6 @@ const DashboardLayout = () => {
         } catch (error) {
             console.error('Failed to log out:', error);
         }
-    };
-
-    const toggleSidebar = () => {
-        setSidebarOpen(!sidebarOpen);
     };
 
     const navigation = [
@@ -47,81 +42,119 @@ const DashboardLayout = () => {
     ];
 
     return (
-        <div className="min-h-screen bg-gray-100">
-            {/* Mobile menu button */}
-            <button
-                className="mobile-menu-button fixed top-4 left-4 z-50 md:hidden bg-white p-2 rounded-md shadow-lg"
-                onClick={toggleSidebar}
-            >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                </svg>
-            </button>
+        <div className="min-h-screen bg-gray-50">
+            {/* Sidebar for mobile */}
+            <div className={`fixed inset-0 flex z-40 lg:hidden ${sidebarOpen ? '' : 'hidden'}`} role="dialog" aria-modal="true">
+                <div className="fixed inset-0 bg-gray-600 bg-opacity-75" aria-hidden="true" onClick={() => setSidebarOpen(false)}></div>
+                
+                <div className="relative flex-1 flex flex-col max-w-xs w-full pt-5 pb-4 bg-gradient-to-b from-purple-700 to-indigo-900">
+                    <div className="absolute top-0 right-0 -mr-12 pt-2">
+                        <button
+                            type="button"
+                            className="ml-1 flex items-center justify-center h-10 w-10 rounded-full focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white"
+                            onClick={() => setSidebarOpen(false)}
+                        >
+                            <span className="sr-only">Close sidebar</span>
+                            <svg className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+                    
+                    {/* Mobile sidebar content */}
+                    <div className="flex-shrink-0 flex items-center px-4">
+                        <img className="h-8 w-auto" src="/logo.png" alt="Logo" />
+                    </div>
+                    <nav className="mt-5 flex-1 flex flex-col divide-y divide-purple-800 overflow-y-auto">
+                        <div className="px-2 space-y-1">
+                            {navigation.map((item) => (
+                                <Link
+                                    key={item.name}
+                                    to={item.href}
+                                    className={`${
+                                        location.pathname === item.href
+                                            ? 'bg-purple-800 text-white'
+                                            : 'text-purple-100 hover:bg-purple-600'
+                                    } group flex items-center px-2 py-2 text-base font-medium rounded-md`}
+                                    onClick={() => setSidebarOpen(false)}
+                                >
+                                    {item.icon}
+                                    <span className="ml-3">{item.name}</span>
+                                </Link>
+                            ))}
+                        </div>
+                    </nav>
+                </div>
+            </div>
 
-            {/* Sidebar */}
-            <div className={`sidebar bg-white shadow-xl ${sidebarOpen ? 'open' : ''}`}>
-                <div className="flex-1 flex flex-col pt-5 pb-4 overflow-y-auto">
+            {/* Static sidebar for desktop */}
+            <div className="hidden lg:flex lg:w-64 lg:flex-col lg:fixed lg:inset-y-0">
+                <div className="flex flex-col flex-grow bg-gradient-to-b from-purple-700 to-indigo-900 pt-5 pb-4 overflow-y-auto">
                     <div className="flex items-center flex-shrink-0 px-4">
                         <img className="h-8 w-auto" src="/logo.png" alt="Logo" />
                     </div>
-                    <nav className="mt-5 flex-1 px-2 space-y-1">
-                        {navigation.map((item) => (
-                            <Link
-                                key={item.name}
-                                to={item.href}
-                                className={`${
-                                    location.pathname === item.href
-                                        ? 'bg-indigo-800 text-white'
-                                        : 'text-indigo-100 hover:bg-indigo-700'
-                                } group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-all duration-150 ease-in-out`}
-                            >
-                                <span className="text-indigo-300 group-hover:text-indigo-100 transition-colors duration-150 ease-in-out">
+                    <nav className="mt-5 flex-1 flex flex-col divide-y divide-purple-800 overflow-y-auto">
+                        <div className="px-2 space-y-1">
+                            {navigation.map((item) => (
+                                <Link
+                                    key={item.name}
+                                    to={item.href}
+                                    className={`${
+                                        location.pathname === item.href
+                                            ? 'bg-purple-800 text-white'
+                                            : 'text-purple-100 hover:bg-purple-600'
+                                    } group flex items-center px-2 py-2 text-sm font-medium rounded-md`}
+                                >
                                     {item.icon}
-                                </span>
-                                <span className="ml-3">{item.name}</span>
-                            </Link>
-                        ))}
+                                    <span className="ml-3">{item.name}</span>
+                                </Link>
+                            ))}
+                        </div>
                     </nav>
                 </div>
-                <div className="flex-shrink-0 flex border-t border-indigo-800 p-4">
+            </div>
+
+            {/* Mobile top bar */}
+            <div className="lg:hidden">
+                <div className="flex items-center justify-between bg-gradient-to-r from-purple-700 to-indigo-900 py-2 px-4 sm:px-6 lg:px-8">
+                    <button
+                        type="button"
+                        className="inline-flex items-center justify-center p-2 rounded-md text-purple-100 hover:text-white hover:bg-purple-600 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white"
+                        onClick={() => setSidebarOpen(true)}
+                    >
+                        <span className="sr-only">Open sidebar</span>
+                        <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
+                        </svg>
+                    </button>
+                    <div className="flex-1 flex justify-center">
+                        <img className="h-8 w-auto" src="/logo.png" alt="Logo" />
+                    </div>
                     <div className="flex items-center">
-                        <div className="relative">
-                            <img 
-                                className="inline-block h-10 w-10 rounded-full ring-2 ring-indigo-300" 
-                                src={`https://ui-avatars.com/api/?name=${user?.name}&background=random`} 
-                                alt="" 
-                            />
-                            <span className="absolute bottom-0 right-0 block h-2.5 w-2.5 rounded-full ring-2 ring-indigo-600 bg-green-400"></span>
-                        </div>
-                        <div className="ml-3">
-                            <p className="text-base font-medium text-white">{user?.name}</p>
-                            <button
-                                onClick={handleLogout}
-                                className="text-sm font-medium text-indigo-200 hover:text-white transition-colors duration-150 ease-in-out"
-                            >
-                                Logout
-                            </button>
-                        </div>
+                        <button
+                            onClick={handleLogout}
+                            className="ml-3 inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700"
+                        >
+                            Logout
+                        </button>
                     </div>
                 </div>
             </div>
 
-            {/* Main Content */}
-            <div className="main-content flex-1 p-4 md:p-8">
-                <div className="max-w-7xl mx-auto">
-                    <div className="bg-white rounded-lg shadow-xl p-6">
-                        <Outlet />
+            {/* Main content */}
+            <div className="lg:pl-64 flex flex-col flex-1">
+                <main className="flex-1">
+                    <div className="py-6">
+                        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                            <div className="bg-white rounded-lg shadow-lg">
+                                <div className="p-4 sm:p-6 lg:p-8">
+                                    <Outlet />
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                </div>
+                </main>
             </div>
-
-            {/* Overlay for mobile */}
-            {sidebarOpen && (
-                <div
-                    className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
-                    onClick={() => setSidebarOpen(false)}
-                ></div>
-            )}
         </div>
     );
 };
