@@ -17,28 +17,27 @@ const Login = () => {
             ...formData,
             [e.target.name]: e.target.value,
         });
+        // Clear error when user starts typing
+        if (error) setError('');
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        
+        if (!formData.email || !formData.password) {
+            setError('Please fill in all fields');
+            return;
+        }
+
         try {
             setError('');
             setLoading(true);
-            console.log('Attempting login with:', formData.email); // Debug log
             
-            const result = await login(formData.email, formData.password);
-            console.log('Login result:', result); // Debug log
-            
-            if (result.success) {
-                console.log('Login successful, navigating to dashboard...'); // Debug log
-                navigate('/dashboard');
-            } else {
-                console.log('Login failed:', result.error); // Debug log
-                setError(result.error || 'Failed to login. Please check your credentials.');
-            }
+            await login(formData.email, formData.password);
+            // If login is successful, navigate to dashboard
+            navigate('/dashboard');
         } catch (err) {
-            console.error('Login error:', err); // Debug log
-            setError('Failed to login. Please check your credentials.');
+            setError(err?.response?.data?.message || 'Failed to login. Please check your credentials.');
         } finally {
             setLoading(false);
         }
@@ -90,6 +89,7 @@ const Login = () => {
                                 placeholder="Email address"
                                 value={formData.email}
                                 onChange={handleChange}
+                                disabled={loading}
                             />
                         </div>
                         <div>
@@ -106,7 +106,16 @@ const Login = () => {
                                 placeholder="Password"
                                 value={formData.password}
                                 onChange={handleChange}
+                                disabled={loading}
                             />
+                        </div>
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                        <div className="text-sm">
+                            <Link to="/forgot-password" className="font-medium text-indigo-600 hover:text-indigo-500">
+                                Forgot your password?
+                            </Link>
                         </div>
                     </div>
 
@@ -127,13 +136,7 @@ const Login = () => {
                                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                     </svg>
                                 </span>
-                            ) : (
-                                <span className="absolute left-0 inset-y-0 flex items-center pl-3">
-                                    <svg className="h-5 w-5 text-indigo-500 group-hover:text-indigo-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                                        <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
-                                    </svg>
-                                </span>
-                            )}
+                            ) : null}
                             {loading ? 'Signing in...' : 'Sign in'}
                         </button>
                     </div>

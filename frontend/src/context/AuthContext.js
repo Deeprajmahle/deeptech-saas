@@ -20,6 +20,11 @@ export const AuthProvider = ({ children }) => {
 
     const checkAuthStatus = async () => {
         try {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                throw new Error('No token found');
+            }
+
             const response = await api.get('/api/auth/me');
             if (response.data && response.data.user) {
                 setUser(response.data.user);
@@ -28,7 +33,7 @@ export const AuthProvider = ({ children }) => {
                 setUser(null);
             }
         } catch (error) {
-            console.error('Auth check failed:', error.response || error);
+            console.error('Auth check failed:', error.response?.data?.message || error.message);
             localStorage.removeItem('token');
             setUser(null);
             setError('Authentication failed');
@@ -51,9 +56,10 @@ export const AuthProvider = ({ children }) => {
                 setUser(response.data.user);
                 return response.data;
             }
+            throw new Error('Registration failed - no token received');
         } catch (error) {
-            console.error('Registration failed:', error.response?.data || error);
-            setError(error.response?.data?.message || 'Registration failed');
+            const errorMessage = error.response?.data?.message || error.message || 'Registration failed';
+            setError(errorMessage);
             throw error;
         }
     };
@@ -61,16 +67,26 @@ export const AuthProvider = ({ children }) => {
     const login = async (email, password) => {
         try {
             setError(null);
-            const response = await api.post('/api/auth/login', { email, password });
             
-            if (response.data.token) {
-                localStorage.setItem('token', response.data.token);
-                setUser(response.data.user);
-                return response.data;
+            if (!email || !password) {
+                throw new Error('Email and password are required');
             }
+
+            const response = await api.post('/api/auth/login', { 
+                email, 
+                password 
+            });
+            
+            if (!response.data || !response.data.token) {
+                throw new Error('Invalid response from server');
+            }
+
+            localStorage.setItem('token', response.data.token);
+            setUser(response.data.user);
+            return response.data;
         } catch (error) {
-            console.error('Login failed:', error.response?.data || error);
-            setError(error.response?.data?.message || 'Login failed');
+            const errorMessage = error.response?.data?.message || error.message || 'Login failed';
+            setError(errorMessage);
             throw error;
         }
     };
@@ -78,11 +94,11 @@ export const AuthProvider = ({ children }) => {
     const logout = () => {
         localStorage.removeItem('token');
         setUser(null);
+        setError(null);
     };
 
     const updateUser = (userData) => {
         try {
-            console.log('Updating user data:', userData);
             setUser(prevUser => ({
                 ...prevUser,
                 ...userData
@@ -103,11 +119,7 @@ export const AuthProvider = ({ children }) => {
         updateUser
     };
 
-    return (
-        <AuthContext.Provider value={value}>
-            {children}
-        </AuthContext.Provider>
-    );
+    return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
 export const useAuth = () => {

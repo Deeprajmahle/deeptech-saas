@@ -22,16 +22,9 @@ api.interceptors.request.use(
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;
         }
-        console.log('API Request:', {
-            url: config.url,
-            method: config.method,
-            baseURL: config.baseURL,
-            hasToken: !!token
-        });
         return config;
     },
     (error) => {
-        console.error('Request error:', error);
         return Promise.reject(error);
     }
 );
@@ -39,34 +32,19 @@ api.interceptors.request.use(
 // Add response interceptor
 api.interceptors.response.use(
     (response) => {
-        console.log('API Response:', {
-            url: response.config.url,
-            status: response.status,
-            data: response.data ? 'Present' : 'Empty'
-        });
         return response;
     },
     (error) => {
-        if (error.response) {
-            console.error('API Error:', {
-                url: error.config.url,
-                status: error.response.status,
-                data: error.response.data
-            });
-
-            // Handle 401 Unauthorized
-            if (error.response.status === 401) {
-                localStorage.removeItem('token');
+        // Handle expired token
+        if (error.response?.status === 401) {
+            localStorage.removeItem('token');
+            // Optionally redirect to login page
+            if (window.location.pathname !== '/login') {
                 window.location.href = '/login';
             }
-        } else if (error.request) {
-            console.error('No response received:', error.request);
-        } else {
-            console.error('Request setup error:', error.message);
         }
         return Promise.reject(error);
     }
 );
 
-// Export the axios instance directly
 export default api;
