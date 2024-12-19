@@ -14,7 +14,7 @@ const Home = () => {
                         Login
                     </Link>
                     <Link
-                        to="/register"
+                        to="/signup"
                         className="bg-white text-purple-600 px-4 py-2 rounded-md hover:bg-purple-100 transition-colors"
                     >
                         Sign Up
@@ -70,7 +70,7 @@ const Home = () => {
 
                 {/* CTA Button */}
                 <Link
-                    to="/register"
+                    to="/signup"
                     className="inline-flex items-center px-8 py-3 bg-white text-purple-600 font-medium rounded-md hover:bg-purple-100 transition-colors text-lg"
                 >
                     Get Started

@@ -37,6 +37,27 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
+    const register = async ({ name, email, password }) => {
+        try {
+            setError(null);
+            const response = await api.post('/api/auth/register', {
+                name,
+                email,
+                password
+            });
+            
+            if (response.data.token) {
+                localStorage.setItem('token', response.data.token);
+                setUser(response.data.user);
+                return response.data;
+            }
+        } catch (error) {
+            console.error('Registration failed:', error.response?.data || error);
+            setError(error.response?.data?.message || 'Registration failed');
+            throw error;
+        }
+    };
+
     const login = async (email, password) => {
         try {
             setError(null);
@@ -78,6 +99,7 @@ export const AuthProvider = ({ children }) => {
         error,
         login,
         logout,
+        register,
         updateUser
     };
 
