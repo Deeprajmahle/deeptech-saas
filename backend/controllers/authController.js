@@ -16,21 +16,23 @@ exports.register = async (req, res) => {
     try {
         const { name, email, password } = req.body;
 
+        if (!password || password.length < 6) {
+            return res.status(400).json({ 
+                message: 'Password must be at least 6 characters long' 
+            });
+        }
+
         // Check if user exists
         const userExists = await User.findOne({ email });
         if (userExists) {
             return res.status(400).json({ message: 'User already exists' });
         }
 
-        // Hash password
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(password, salt);
-
-        // Create user
+        // Create user with hashed password (handled by pre-save hook)
         const user = await User.create({
             name,
             email,
-            password: hashedPassword
+            password
         });
 
         if (user) {
@@ -58,39 +60,32 @@ exports.register = async (req, res) => {
 exports.login = async (req, res) => {
     try {
         const { email, password } = req.body;
-        console.log('Login attempt received for:', email);
 
-        // Check for user email
-        const user = await User.findOne({ email }).select('+password');
-        console.log('User found:', user ? {
-            email: user.email,
-            role: user.role,
-            hasPassword: !!user.password,
-            passwordLength: user.password ? user.password.length : 0
-        } : 'No user found');
-
-        if (!user) {
-            console.log('User not found:', email);
-            return res.status(401).json({ message: 'Invalid email or password' });
+        if (!email || !password) {
+            return res.status(400).json({ 
+                message: 'Please provide email and password' 
+            });
         }
 
-        // Check password
-        console.log('Attempting password comparison...');
-        const isMatch = await bcrypt.compare(password, user.password);
-        console.log('Password comparison result:', isMatch);
+        // Check for user email and explicitly select password field
+        const user = await User.findOne({ email }).select('+password');
+        
+        if (!user) {
+            return res.status(401).json({ message: 'Invalid credentials' });
+        }
+
+        // Check password using the matchPassword method from the User model
+        const isMatch = await user.matchPassword(password);
 
         if (!isMatch) {
-            console.log('Password mismatch for user:', email);
-            return res.status(401).json({ message: 'Invalid email or password' });
+            return res.status(401).json({ message: 'Invalid credentials' });
         }
-
-        const token = generateToken(user._id);
-        console.log('Login successful, token generated for:', email);
 
         // Update last login
         user.lastLogin = new Date();
         await user.save();
 
+        // Send response
         res.json({
             user: {
                 _id: user._id,
@@ -98,12 +93,12 @@ exports.login = async (req, res) => {
                 email: user.email,
                 role: user.role
             },
-            token
+            token: generateToken(user._id)
         });
     } catch (error) {
         console.error('Login error:', error);
         res.status(500).json({ 
-            message: error.message || 'Error logging in'
+            message: 'Error logging in' 
         });
     }
 };
@@ -113,15 +108,24 @@ exports.login = async (req, res) => {
 // @access  Private
 exports.getMe = async (req, res) => {
     try {
-        const user = await User.findById(req.user.id).select('-password');
+        const user = await User.findById(req.user.id);
+        
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }
-        res.json({ user });
+
+        res.json({
+            user: {
+                _id: user._id,
+                name: user.name,
+                email: user.email,
+                role: user.role
+            }
+        });
     } catch (error) {
         console.error('Get me error:', error);
         res.status(500).json({ 
-            message: error.message || 'Error getting user info'
+            message: 'Error getting user information' 
         });
     }
 };

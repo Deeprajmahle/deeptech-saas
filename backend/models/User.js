@@ -22,7 +22,8 @@ const userSchema = new mongoose.Schema({
     password: {
         type: String,
         required: [true, 'Please provide a password'],
-        minLength: [6, 'Password must be at least 6 characters']
+        minLength: [6, 'Password must be at least 6 characters'],
+        select: false // Don't include password by default in queries
     },
     role: {
         type: String,
@@ -42,147 +43,36 @@ const userSchema = new mongoose.Schema({
         maxLength: [500, 'Bio cannot be more than 500 characters']
     },
     skills: [{
-        name: {
-            type: String,
-            required: true
-        },
+        name: String,
         proficiency: {
             type: Number,
             min: 0,
-            max: 100,
-            default: 0
+            max: 100
         }
     }],
-    certifications: [{
-        name: {
-            type: String,
-            required: true
-        },
-        issuer: String,
-        date: Date,
-        score: Number
-    }],
-    courses: [{
-        courseId: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'Course'
-        },
-        progress: {
-            type: Number,
-            default: 0
-        },
-        status: {
-            type: String,
-            enum: ['enrolled', 'in-progress', 'completed'],
-            default: 'enrolled'
-        },
-        enrolledAt: {
-            type: Date,
-            default: Date.now
-        }
-    }],
-    activities: [{
-        type: {
-            type: String,
-            enum: ['post', 'comment', 'like', 'enroll', 'complete'],
-            required: true
-        },
-        content: String,
-        timestamp: {
-            type: Date,
-            default: Date.now
-        },
-        reference: {
-            type: mongoose.Schema.Types.ObjectId,
-            refPath: 'activities.referenceModel'
-        },
-        referenceModel: {
-            type: String,
-            enum: ['Course', 'Post', 'Comment']
-        }
-    }],
-    statistics: {
-        totalCoursesCompleted: {
-            type: Number,
-            default: 0
-        },
-        averageRating: {
-            type: Number,
-            default: 0
-        },
-        projectsCompleted: {
-            type: Number,
-            default: 0
-        }
-    },
-    theme: {
-        type: String,
-        enum: ['light', 'dark'],
-        default: 'light'
-    },
-    notifications: {
-        email: {
-            type: Boolean,
-            default: true
-        },
-        sms: {
-            type: Boolean,
-            default: false
-        },
-        push: {
-            type: Boolean,
-            default: true
-        }
-    },
-    phone: {
-        type: String,
-        validate: {
-            validator: function(v) {
-                return /\d{10}/.test(v);
-            },
-            message: props => `${props.value} is not a valid phone number!`
-        }
-    },
     lastLogin: {
         type: Date,
         default: Date.now
     },
-    isActive: {
-        type: Boolean,
-        default: true
-    }
-}, {
-    timestamps: true
+    resetPasswordToken: String,
+    resetPasswordExpire: Date
 });
 
-// Hash password before saving
+// Encrypt password using bcrypt
 userSchema.pre('save', async function(next) {
-    // Only hash the password if it has been modified (or is new)
     if (!this.isModified('password')) {
-        return next();
+        next();
     }
 
-    try {
-        // Generate salt
-        const salt = await bcrypt.genSalt(10);
-        // Hash password
-        this.password = await bcrypt.hash(this.password, salt);
-        next();
-    } catch (error) {
-        next(error);
-    }
+    const salt = await bcrypt.genSalt(10);
+    this.password = await bcrypt.hash(this.password, salt);
 });
 
 // Match password
 userSchema.methods.matchPassword = async function(enteredPassword) {
-    try {
-        return await bcrypt.compare(enteredPassword, this.password);
-    } catch (error) {
-        throw new Error('Error comparing passwords');
-    }
+    return await bcrypt.compare(enteredPassword, this.password);
 };
 
-// Create model
 const User = mongoose.model('User', userSchema);
 
 module.exports = User;
