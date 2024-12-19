@@ -61,21 +61,23 @@ exports.login = async (req, res) => {
         console.log('Login attempt received for:', email);
 
         // Check for user email
-        const user = await User.findOne({ email });
+        const user = await User.findOne({ email }).select('+password');
+        console.log('User found:', user ? {
+            email: user.email,
+            role: user.role,
+            hasPassword: !!user.password,
+            passwordLength: user.password ? user.password.length : 0
+        } : 'No user found');
+
         if (!user) {
             console.log('User not found:', email);
             return res.status(401).json({ message: 'Invalid email or password' });
         }
 
-        console.log('User found:', {
-            email: user.email,
-            role: user.role,
-            hasPassword: !!user.password
-        });
-
         // Check password
+        console.log('Attempting password comparison...');
         const isMatch = await bcrypt.compare(password, user.password);
-        console.log('Password match result:', isMatch);
+        console.log('Password comparison result:', isMatch);
 
         if (!isMatch) {
             console.log('Password mismatch for user:', email);
@@ -84,6 +86,10 @@ exports.login = async (req, res) => {
 
         const token = generateToken(user._id);
         console.log('Login successful, token generated for:', email);
+
+        // Update last login
+        user.lastLogin = new Date();
+        await user.save();
 
         res.json({
             user: {
