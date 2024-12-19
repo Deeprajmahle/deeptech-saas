@@ -16,8 +16,17 @@ exports.register = async (req, res) => {
     try {
         const { name, email, password } = req.body;
 
-        if (!password || password.length < 6) {
+        // Validate input
+        if (!name || !email || !password) {
+            return res.status(400).json({
+                success: false,
+                message: 'Please provide all required fields'
+            });
+        }
+
+        if (password.length < 6) {
             return res.status(400).json({ 
+                success: false,
                 message: 'Password must be at least 6 characters long' 
             });
         }
@@ -25,7 +34,10 @@ exports.register = async (req, res) => {
         // Check if user exists
         const userExists = await User.findOne({ email });
         if (userExists) {
-            return res.status(400).json({ message: 'User already exists' });
+            return res.status(400).json({
+                success: false,
+                message: 'User already exists'
+            });
         }
 
         // Create user with hashed password (handled by pre-save hook)
@@ -35,21 +47,23 @@ exports.register = async (req, res) => {
             password
         });
 
-        if (user) {
-            res.status(201).json({
-                user: {
-                    _id: user._id,
-                    name: user.name,
-                    email: user.email,
-                    role: user.role
-                },
-                token: generateToken(user._id)
-            });
-        }
+        // Generate token and send response
+        const token = generateToken(user._id);
+        res.status(201).json({
+            success: true,
+            user: {
+                _id: user._id,
+                name: user.name,
+                email: user.email,
+                role: user.role
+            },
+            token
+        });
     } catch (error) {
         console.error('Register error:', error);
         res.status(500).json({ 
-            message: error.message || 'Error registering user'
+            success: false,
+            message: 'Error registering user. Please try again.' 
         });
     }
 };
@@ -61,44 +75,62 @@ exports.login = async (req, res) => {
     try {
         const { email, password } = req.body;
 
+        // Validate input
         if (!email || !password) {
             return res.status(400).json({ 
-                message: 'Please provide email and password' 
+                success: false,
+                message: 'Please provide both email and password' 
             });
         }
 
-        // Check for user email and explicitly select password field
+        // Find user and include password field
         const user = await User.findOne({ email }).select('+password');
         
         if (!user) {
-            return res.status(401).json({ message: 'Invalid credentials' });
+            return res.status(401).json({
+                success: false,
+                message: 'Invalid credentials'
+            });
         }
 
-        // Check password using the matchPassword method from the User model
-        const isMatch = await user.matchPassword(password);
+        // Verify password
+        try {
+            const isMatch = await user.matchPassword(password);
+            
+            if (!isMatch) {
+                return res.status(401).json({
+                    success: false,
+                    message: 'Invalid credentials'
+                });
+            }
 
-        if (!isMatch) {
-            return res.status(401).json({ message: 'Invalid credentials' });
+            // Update last login without triggering password hash
+            await User.findByIdAndUpdate(user._id, { lastLogin: new Date() });
+
+            // Generate token and send response
+            const token = generateToken(user._id);
+            res.json({
+                success: true,
+                user: {
+                    _id: user._id,
+                    name: user.name,
+                    email: user.email,
+                    role: user.role
+                },
+                token
+            });
+        } catch (error) {
+            console.error('Password verification error:', error);
+            return res.status(500).json({ 
+                success: false,
+                message: 'Error verifying credentials. Please try again.' 
+            });
         }
-
-        // Update last login
-        user.lastLogin = new Date();
-        await user.save();
-
-        // Send response
-        res.json({
-            user: {
-                _id: user._id,
-                name: user.name,
-                email: user.email,
-                role: user.role
-            },
-            token: generateToken(user._id)
-        });
     } catch (error) {
         console.error('Login error:', error);
         res.status(500).json({ 
-            message: 'Error logging in' 
+            success: false,
+            message: 'Error logging in. Please try again.' 
         });
     }
 };
@@ -111,10 +143,14 @@ exports.getMe = async (req, res) => {
         const user = await User.findById(req.user.id);
         
         if (!user) {
-            return res.status(404).json({ message: 'User not found' });
+            return res.status(404).json({
+                success: false,
+                message: 'User not found'
+            });
         }
 
         res.json({
+            success: true,
             user: {
                 _id: user._id,
                 name: user.name,
@@ -125,6 +161,7 @@ exports.getMe = async (req, res) => {
     } catch (error) {
         console.error('Get me error:', error);
         res.status(500).json({ 
+            success: false,
             message: 'Error getting user information' 
         });
     }

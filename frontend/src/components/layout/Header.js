@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline';
+import { Bars3Icon } from '@heroicons/react/24/outline';
 
 const Header = ({ onMenuClick }) => {
     const { user, logout } = useAuth();
@@ -19,7 +19,7 @@ const Header = ({ onMenuClick }) => {
                             <Bars3Icon className="h-6 w-6" />
                         </button>
                         
-                        <Link to="/" className="flex items-center ml-2 lg:ml-0">
+                        <Link to="/dashboard" className="flex items-center ml-2 lg:ml-0">
                             <span className="text-xl font-bold text-indigo-600 dark:text-indigo-400">
                                 DeepTech
                             </span>
@@ -39,6 +39,18 @@ const Header = ({ onMenuClick }) => {
                             className="text-gray-600 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-400 px-3 py-2 text-sm font-medium"
                         >
                             Courses
+                        </Link>
+                        <Link
+                            to="/dashboard"
+                            className="text-gray-600 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-400 px-3 py-2 text-sm font-medium"
+                        >
+                            Resources
+                        </Link>
+                        <Link
+                            to="/dashboard"
+                            className="text-gray-600 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-400 px-3 py-2 text-sm font-medium"
+                        >
+                            Community
                         </Link>
                         <Link
                             to="/analytics"

@@ -9,7 +9,6 @@ export const AuthProvider = ({ children }) => {
     const [error, setError] = useState(null);
 
     useEffect(() => {
-        // Check if user is logged in
         const token = localStorage.getItem('token');
         if (token) {
             checkAuthStatus();
@@ -26,7 +25,7 @@ export const AuthProvider = ({ children }) => {
             }
 
             const response = await api.get('/api/auth/me');
-            if (response.data && response.data.user) {
+            if (response.data?.success && response.data?.user) {
                 setUser(response.data.user);
             } else {
                 localStorage.removeItem('token');
@@ -36,9 +35,9 @@ export const AuthProvider = ({ children }) => {
             console.error('Auth check failed:', error.response?.data?.message || error.message);
             localStorage.removeItem('token');
             setUser(null);
-            setError('Authentication failed');
         } finally {
             setLoading(false);
+            setError(null);
         }
     };
 
@@ -51,14 +50,14 @@ export const AuthProvider = ({ children }) => {
                 password
             });
             
-            if (response.data.token) {
+            if (response.data?.success && response.data?.token) {
                 localStorage.setItem('token', response.data.token);
                 setUser(response.data.user);
                 return response.data;
             }
-            throw new Error('Registration failed - no token received');
+            throw new Error(response.data?.message || 'Registration failed');
         } catch (error) {
-            const errorMessage = error.response?.data?.message || error.message || 'Registration failed';
+            const errorMessage = error.response?.data?.message || error.message;
             setError(errorMessage);
             throw error;
         }
@@ -69,23 +68,23 @@ export const AuthProvider = ({ children }) => {
             setError(null);
             
             if (!email || !password) {
-                throw new Error('Email and password are required');
+                throw new Error('Please provide both email and password');
             }
 
             const response = await api.post('/api/auth/login', { 
-                email, 
+                email: email.trim(), 
                 password 
             });
             
-            if (!response.data || !response.data.token) {
-                throw new Error('Invalid response from server');
+            if (!response.data?.success || !response.data?.token) {
+                throw new Error(response.data?.message || 'Login failed');
             }
 
             localStorage.setItem('token', response.data.token);
             setUser(response.data.user);
             return response.data;
         } catch (error) {
-            const errorMessage = error.response?.data?.message || error.message || 'Login failed';
+            const errorMessage = error.response?.data?.message || error.message;
             setError(errorMessage);
             throw error;
         }

@@ -17,12 +17,19 @@ const Sidebar = ({ isOpen, onClose }) => {
         { name: 'Dashboard', href: '/dashboard', icon: HomeIcon },
         { name: 'Courses', href: '/courses', icon: BookOpenIcon },
         { name: 'Analytics', href: '/analytics', icon: ChartBarIcon },
-        { name: 'Community', href: '/community', icon: UserGroupIcon },
-        { name: 'Resources', href: '/resources', icon: DocumentTextIcon },
+        { name: 'Community', href: '/dashboard', icon: UserGroupIcon },
+        { name: 'Resources', href: '/dashboard', icon: DocumentTextIcon },
         { name: 'Settings', href: '/settings', icon: CogIcon },
     ];
 
-    const isActive = (path) => location.pathname === path;
+    const isActive = (path) => {
+        if (path === '/dashboard') {
+            return location.pathname === '/dashboard' || 
+                   location.pathname === '/community' || 
+                   location.pathname === '/resources';
+        }
+        return location.pathname === path;
+    };
 
     return (
         <>
