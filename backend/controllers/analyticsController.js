@@ -6,19 +6,76 @@ const Course = require('../models/Course');
 // @access  Private
 exports.getDashboardAnalytics = async (req, res) => {
     try {
-        // Get user's courses and activities
-        const user = await User.findById(req.user.id)
-            .populate('enrolledCourses')
-            .select('-password');
+        // Get current date and last month's date
+        const currentDate = new Date();
+        const lastMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1);
 
-        // Calculate analytics data
+        // Get all users
+        const users = await User.find({});
+        const lastMonthUsers = await User.find({ createdAt: { $lt: currentDate, $gte: lastMonth } });
+
+        // Calculate user growth
+        const userGrowth = ((users.length - lastMonthUsers.length) / lastMonthUsers.length) * 100;
+
+        // Mock revenue data (replace with actual revenue calculation)
+        const totalRevenue = 12345;
+        const lastMonthRevenue = 11000;
+        const revenueGrowth = ((totalRevenue - lastMonthRevenue) / lastMonthRevenue) * 100;
+
+        // Mock conversion data (replace with actual conversion calculation)
+        const conversions = 234;
+        const lastMonthConversions = 236;
+        const conversionRate = 2.3;
+        const conversionChange = ((conversions - lastMonthConversions) / lastMonthConversions) * 100;
+
+        // Mock session data (replace with actual session calculation)
+        const avgSessionDuration = '4m 32s';
+        const lastMonthSessionDuration = '4m 10s';
+        const sessionGrowth = 8;
+
+        // Monthly revenue data
+        const monthlyRevenue = [
+            { month: 'January', revenue: 1200 },
+            { month: 'February', revenue: 1900 },
+            { month: 'March', revenue: 3000 },
+            { month: 'April', revenue: 4800 },
+            { month: 'May', revenue: 2000 },
+            { month: 'June', revenue: 3000 }
+        ];
+
+        // Performance metrics
+        const performanceMetrics = {
+            currentMonth: {
+                users: 65,
+                sessions: 59,
+                conversions: 80,
+                sales: 81
+            },
+            lastMonth: {
+                users: 45,
+                sessions: 39,
+                conversions: 60,
+                sales: 61
+            }
+        };
+
+        // Recent activity
+        const recentActivity = await getRecentActivity(req.user.id);
+
         const analyticsData = {
-            coursesEnrolled: user.enrolledCourses.length,
-            completedCourses: user.enrolledCourses.filter(course => course.completed).length,
-            averageScore: calculateAverageScore(user.enrolledCourses),
-            recentActivity: await getRecentActivity(user.id),
-            progressData: await getProgressData(user.id),
-            activityBreakdown: await getActivityBreakdown(user.id)
+            overview: {
+                totalRevenue,
+                activeUsers: users.length,
+                conversionRate,
+                avgSessionDuration,
+                revenueGrowth,
+                userGrowth,
+                conversionChange,
+                sessionGrowth
+            },
+            monthlyRevenue,
+            performanceMetrics,
+            recentActivity
         };
 
         res.json(analyticsData);
@@ -30,56 +87,27 @@ exports.getDashboardAnalytics = async (req, res) => {
     }
 };
 
-// Helper functions
-const calculateAverageScore = (courses) => {
-    if (!courses.length) return 0;
-    
-    const totalScore = courses.reduce((sum, course) => {
-        return sum + (course.score || 0);
-    }, 0);
-    
-    return Math.round(totalScore / courses.length);
-};
-
+// Helper function to get recent activity
 const getRecentActivity = async (userId) => {
-    // This would typically query your activity logs
-    // For now, returning mock data
+    // Mock recent activity data
     return [
         {
-            type: 'quiz',
-            title: 'JavaScript Basics',
-            score: 90,
-            date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000)
+            type: 'registration',
+            title: 'New User Registration',
+            description: 'John Doe registered an account',
+            timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000) // 2 hours ago
         },
         {
-            type: 'video',
-            title: 'React Components',
-            duration: 45,
-            date: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000)
+            type: 'purchase',
+            title: 'Course Purchase',
+            description: 'React Masterclass was purchased',
+            timestamp: new Date(Date.now() - 5 * 60 * 60 * 1000) // 5 hours ago
         },
         {
-            type: 'assignment',
-            title: 'API Integration',
-            status: 'Under Review',
-            date: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000)
+            type: 'completion',
+            title: 'Course Completion',
+            description: 'Jane Smith completed JavaScript Basics',
+            timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000) // 1 day ago
         }
     ];
-};
-
-const getProgressData = async (userId) => {
-    // This would typically calculate actual progress over time
-    // For now, returning mock data
-    return {
-        labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
-        data: [25, 45, 70, 85]
-    };
-};
-
-const getActivityBreakdown = async (userId) => {
-    // This would typically calculate actual activity breakdown
-    // For now, returning mock data
-    return {
-        labels: ['Assignments', 'Quizzes', 'Videos', 'Reading'],
-        data: [65, 80, 45, 90]
-    };
 };

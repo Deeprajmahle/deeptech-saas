@@ -1,25 +1,33 @@
 import axios from 'axios';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+// Get API URL from environment variables
+const API_BASE_URL = process.env.REACT_APP_API_URL;
 
-console.log('API Base URL:', API_BASE_URL); // Debug log
+if (!API_BASE_URL) {
+    console.warn('REACT_APP_API_URL is not set in environment variables, using default: http://localhost:5000');
+}
 
-const axiosInstance = axios.create({
-    baseURL: API_BASE_URL,
+const api = axios.create({
+    baseURL: API_BASE_URL || 'http://localhost:5000',
     headers: {
         'Content-Type': 'application/json',
     },
-    timeout: 15000, // Increased to 15 seconds
+    timeout: 15000, // 15 seconds
 });
 
-// Add a request interceptor
-axiosInstance.interceptors.request.use(
+// Add request interceptor
+api.interceptors.request.use(
     (config) => {
         const token = localStorage.getItem('token');
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;
         }
-        console.log('Making request to:', config.url); // Debug log
+        console.log('API Request:', {
+            url: config.url,
+            method: config.method,
+            baseURL: config.baseURL,
+            hasToken: !!token
+        });
         return config;
     },
     (error) => {
@@ -28,42 +36,37 @@ axiosInstance.interceptors.request.use(
     }
 );
 
-// Add a response interceptor
-axiosInstance.interceptors.response.use(
+// Add response interceptor
+api.interceptors.response.use(
     (response) => {
-        console.log('Response received:', response.status); // Debug log
+        console.log('API Response:', {
+            url: response.config.url,
+            status: response.status,
+            data: response.data ? 'Present' : 'Empty'
+        });
         return response;
     },
     (error) => {
         if (error.response) {
-            // The request was made and the server responded with a status code
-            // that falls out of the range of 2xx
-            console.error('Response error data:', error.response.data);
-            console.error('Response error status:', error.response.status);
-            console.error('Response error headers:', error.response.headers);
+            console.error('API Error:', {
+                url: error.config.url,
+                status: error.response.status,
+                data: error.response.data
+            });
 
             // Handle 401 Unauthorized
             if (error.response.status === 401) {
-                localStorage.removeItem('token'); // Clear invalid token
-                window.location.href = '/login'; // Redirect to login
+                localStorage.removeItem('token');
+                window.location.href = '/login';
             }
         } else if (error.request) {
-            // The request was made but no response was received
             console.error('No response received:', error.request);
         } else {
-            // Something happened in setting up the request that triggered an Error
-            console.error('Error setting up request:', error.message);
+            console.error('Request setup error:', error.message);
         }
-
         return Promise.reject(error);
     }
 );
 
-const api = {
-    get: (endpoint) => axiosInstance.get(endpoint),
-    post: (endpoint, data) => axiosInstance.post(endpoint, data),
-    put: (endpoint, data) => axiosInstance.put(endpoint, data),
-    delete: (endpoint) => axiosInstance.delete(endpoint),
-};
-
+// Export the axios instance directly
 export default api;

@@ -42,15 +42,14 @@ const DashboardLayout = ({ children }) => {
     ];
 
     return (
-        <div className="min-h-screen bg-gray-100">
-            {/* Sidebar for mobile */}
+        <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+            {/* Mobile sidebar */}
             <div className={`fixed inset-0 flex z-40 md:hidden ${sidebarOpen ? '' : 'hidden'}`} role="dialog" aria-modal="true">
-                {/* Sidebar component */}
                 <div className="fixed inset-0 bg-gray-600 bg-opacity-75" aria-hidden="true" onClick={() => setSidebarOpen(false)}></div>
-                <div className="relative flex-1 flex flex-col max-w-xs w-full bg-white">
+                
+                <div className="relative flex-1 flex flex-col max-w-xs w-full pt-5 pb-4 bg-white">
                     <div className="absolute top-0 right-0 -mr-12 pt-2">
                         <button
-                            type="button"
                             className="ml-1 flex items-center justify-center h-10 w-10 rounded-full focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white"
                             onClick={() => setSidebarOpen(false)}
                         >
@@ -60,20 +59,25 @@ const DashboardLayout = ({ children }) => {
                             </svg>
                         </button>
                     </div>
-                    <div className="flex-1 h-0 pt-5 pb-4 overflow-y-auto">
-                        <nav className="mt-5 px-2 space-y-1">
+                    
+                    <div className="flex-shrink-0 flex items-center px-4">
+                        <span className="text-2xl font-bold text-indigo-600">DeepTech</span>
+                    </div>
+                    
+                    <div className="mt-5 flex-1 h-0 overflow-y-auto">
+                        <nav className="px-2 space-y-1">
                             {navigation.map((item) => (
                                 <Link
                                     key={item.name}
                                     to={item.href}
                                     className={`${
                                         location.pathname === item.href
-                                            ? 'bg-gray-100 text-gray-900'
-                                            : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                                    } group flex items-center px-2 py-2 text-base font-medium rounded-md`}
+                                            ? 'bg-indigo-50 border-indigo-500 text-indigo-700'
+                                            : 'border-transparent text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                                    } group flex items-center px-3 py-2 text-base font-medium border-l-4`}
                                 >
                                     {item.icon}
-                                    {item.name}
+                                    <span className="ml-3">{item.name}</span>
                                 </Link>
                             ))}
                         </nav>
@@ -83,21 +87,24 @@ const DashboardLayout = ({ children }) => {
 
             {/* Static sidebar for desktop */}
             <div className="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0">
-                <div className="flex-1 flex flex-col min-h-0 bg-white border-r border-gray-200">
-                    <div className="flex-1 flex flex-col pt-5 pb-4 overflow-y-auto">
-                        <nav className="mt-5 flex-1 px-2 space-y-1">
+                <div className="flex flex-col flex-grow pt-5 bg-white overflow-y-auto border-r border-gray-200">
+                    <div className="flex items-center flex-shrink-0 px-4">
+                        <span className="text-2xl font-bold text-indigo-600">DeepTech</span>
+                    </div>
+                    <div className="mt-5 flex-1 flex flex-col">
+                        <nav className="flex-1 px-2 space-y-1">
                             {navigation.map((item) => (
                                 <Link
                                     key={item.name}
                                     to={item.href}
                                     className={`${
                                         location.pathname === item.href
-                                            ? 'bg-gray-100 text-gray-900'
-                                            : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                                    } group flex items-center px-2 py-2 text-sm font-medium rounded-md`}
+                                            ? 'bg-indigo-50 border-indigo-500 text-indigo-700'
+                                            : 'border-transparent text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                                    } group flex items-center px-3 py-2 text-sm font-medium border-l-4`}
                                 >
                                     {item.icon}
-                                    {item.name}
+                                    <span className="ml-3">{item.name}</span>
                                 </Link>
                             ))}
                         </nav>
@@ -107,12 +114,14 @@ const DashboardLayout = ({ children }) => {
                             <div>
                                 <img
                                     className="inline-block h-9 w-9 rounded-full"
-                                    src={`https://ui-avatars.com/api/?name=${user?.name || 'User'}&background=random`}
-                                    alt={user?.name}
+                                    src={user?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'User')}&background=random`}
+                                    alt=""
                                 />
                             </div>
                             <div className="ml-3">
-                                <p className="text-sm font-medium text-gray-700 group-hover:text-gray-900">{user?.name}</p>
+                                <p className="text-sm font-medium text-gray-700 group-hover:text-gray-900">
+                                    {user?.name}
+                                </p>
                                 <button
                                     onClick={handleLogout}
                                     className="text-xs font-medium text-gray-500 group-hover:text-gray-700"
@@ -125,7 +134,7 @@ const DashboardLayout = ({ children }) => {
                 </div>
             </div>
 
-            {/* Mobile header */}
+            {/* Mobile top bar */}
             <div className="md:pl-64 flex flex-col flex-1">
                 <div className="sticky top-0 z-10 md:hidden pl-1 pt-1 sm:pl-3 sm:pt-3 bg-gray-100">
                     <button
@@ -142,7 +151,9 @@ const DashboardLayout = ({ children }) => {
 
                 <main className="flex-1">
                     <div className="py-6">
-                        {children}
+                        <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
+                            {children}
+                        </div>
                     </div>
                 </main>
             </div>

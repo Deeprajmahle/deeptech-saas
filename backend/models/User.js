@@ -114,6 +114,42 @@ const userSchema = new mongoose.Schema({
             type: Number,
             default: 0
         }
+    },
+    theme: {
+        type: String,
+        enum: ['light', 'dark'],
+        default: 'light'
+    },
+    notifications: {
+        email: {
+            type: Boolean,
+            default: true
+        },
+        sms: {
+            type: Boolean,
+            default: false
+        },
+        push: {
+            type: Boolean,
+            default: true
+        }
+    },
+    phone: {
+        type: String,
+        validate: {
+            validator: function(v) {
+                return /\d{10}/.test(v);
+            },
+            message: props => `${props.value} is not a valid phone number!`
+        }
+    },
+    lastLogin: {
+        type: Date,
+        default: Date.now
+    },
+    isActive: {
+        type: Boolean,
+        default: true
     }
 }, {
     timestamps: true

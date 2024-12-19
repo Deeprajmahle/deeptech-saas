@@ -64,20 +64,51 @@ const generateToken = (id) => {
   });
 };
 
-// @desc    Get all users
+// @desc    Get all users with pagination, sorting, and filtering
 // @route   GET /api/users
 // @access  Private/Admin
-const getUsers = async (req, res) => {
-  try {
-    const users = await User.find({}).select('-password');
-    res.json(users);
-  } catch (error) {
-    console.error('Get users error:', error);
-    res.status(500).json({ 
-      message: error.message || 'Error retrieving users'
-    });
+const getUsers = asyncHandler(async (req, res) => {
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 10;
+  const sortField = req.query.sortField || 'name';
+  const sortOrder = req.query.sortOrder || 'asc';
+  const search = req.query.search || '';
+
+  const sortOptions = {};
+  sortOptions[sortField] = sortOrder === 'asc' ? 1 : -1;
+
+  const query = {};
+  if (search) {
+    query.$or = [
+      { name: { $regex: search, $options: 'i' } },
+      { email: { $regex: search, $options: 'i' } },
+      { role: { $regex: search, $options: 'i' } }
+    ];
   }
-};
+
+  const skip = (page - 1) * limit;
+
+  const [users, total] = await Promise.all([
+    User.find(query)
+      .sort(sortOptions)
+      .skip(skip)
+      .limit(limit)
+      .select('-password'),
+    User.countDocuments(query)
+  ]);
+
+  const totalPages = Math.ceil(total / limit);
+
+  res.json({
+    users,
+    pagination: {
+      page,
+      limit,
+      total,
+      totalPages
+    }
+  });
+});
 
 // @desc    Get user by ID
 // @route   GET /api/users/:id
@@ -167,43 +198,84 @@ const getProfile = asyncHandler(async (req, res) => {
 // @route   PUT /api/users/profile
 // @access  Private
 const updateProfile = asyncHandler(async (req, res) => {
-    const { name, email, title, skills, certifications } = req.body;
-    
-    const user = await User.findById(req.user.id);
-    
-    if (!user) {
-        res.status(404);
-        throw new Error('User not found');
-    }
+    try {
+        console.log('Update profile request:', {
+            ...req.body,
+            currentPassword: req.body.currentPassword ? '[REDACTED]' : undefined,
+            newPassword: req.body.newPassword ? '[REDACTED]' : undefined
+        });
 
-    // Check if email is being changed and if it's already taken
-    if (email && email !== user.email) {
-        const emailExists = await User.findOne({ email });
-        if (emailExists) {
-            res.status(400);
-            throw new Error('Email already exists');
+        const user = await User.findById(req.user._id);
+        if (!user) {
+            res.status(404);
+            throw new Error('User not found');
         }
-    }
 
-    user.name = name || user.name;
-    user.email = email || user.email;
-    user.title = title || user.title;
-    user.skills = skills || user.skills;
-    user.certifications = certifications || user.certifications;
-
-    const updatedUser = await user.save();
-    res.json({
-        success: true,
-        data: {
-            _id: updatedUser._id,
-            name: updatedUser.name,
-            email: updatedUser.email,
-            title: updatedUser.title,
-            skills: updatedUser.skills,
-            certifications: updatedUser.certifications,
-            role: updatedUser.role
+        // Check if email is being changed and if it's already taken
+        if (req.body.email && req.body.email !== user.email) {
+            const emailExists = await User.findOne({ email: req.body.email });
+            if (emailExists) {
+                res.status(400);
+                throw new Error('Email already exists');
+            }
         }
-    });
+
+        // Validate current password if trying to change password
+        if (req.body.newPassword) {
+            if (!req.body.currentPassword) {
+                res.status(400);
+                throw new Error('Current password is required');
+            }
+
+            const isMatch = await user.matchPassword(req.body.currentPassword);
+            if (!isMatch) {
+                res.status(401);
+                throw new Error('Current password is incorrect');
+            }
+
+            // Hash new password
+            const salt = await bcrypt.genSalt(10);
+            user.password = await bcrypt.hash(req.body.newPassword, salt);
+        }
+
+        // Update user fields
+        user.name = req.body.name || user.name;
+        user.email = req.body.email || user.email;
+
+        // Update notification preferences
+        if (req.body.notifications) {
+            user.notifications = {
+                email: req.body.notifications.email ?? user.notifications?.email ?? true,
+                sms: req.body.notifications.sms ?? user.notifications?.sms ?? false,
+                push: req.body.notifications.push ?? user.notifications?.push ?? true
+            };
+        }
+
+        // Save theme preference
+        if (req.body.theme) {
+            user.theme = req.body.theme;
+        }
+
+        const updatedUser = await user.save();
+        console.log('User updated successfully:', updatedUser._id);
+
+        res.json({
+            success: true,
+            user: {
+                _id: updatedUser._id,
+                name: updatedUser.name,
+                email: updatedUser.email,
+                notifications: updatedUser.notifications,
+                theme: updatedUser.theme
+            }
+        });
+    } catch (error) {
+        console.error('Error in updateProfile:', error);
+        res.status(error.status || 500).json({
+            success: false,
+            message: error.message || 'Error updating profile'
+        });
+    }
 });
 
 // @desc    Update password
@@ -270,16 +342,44 @@ const getUserActivities = asyncHandler(async (req, res) => {
     res.json({ success: true, data: user.activities });
 });
 
+// @desc    Export users as CSV
+// @route   GET /api/users/export
+// @access  Private/Admin
+const exportUsers = asyncHandler(async (req, res) => {
+    const users = await User.find({}).select('-password');
+    
+    // Create CSV header
+    const csvHeader = ['Name', 'Email', 'Role', 'Registration Date'].join(',');
+    
+    // Create CSV rows
+    const csvRows = users.map(user => {
+        return [
+            user.name,
+            user.email,
+            user.role,
+            new Date(user.createdAt).toISOString()
+        ].join(',');
+    });
+
+    // Combine header and rows
+    const csvContent = [csvHeader, ...csvRows].join('\n');
+
+    // Set headers for file download
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', 'attachment; filename=users.csv');
+
+    res.send(csvContent);
+});
+
 module.exports = { 
-  registerUser, 
-  authUser, 
-  getUsers, 
-  getUserById, 
-  updateUser, 
-  deleteUser, 
-  getProfile, 
-  updateProfile, 
-  updatePassword, 
-  getUserCourses, 
-  getUserActivities 
+  getUsers,
+  getUserById,
+  updateUser,
+  deleteUser,
+  getUserProfile: getProfile,
+  updateProfile,
+  updatePassword,
+  getUserCourses,
+  getUserActivities,
+  exportUsers
 };
